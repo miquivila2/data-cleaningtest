@@ -10,11 +10,11 @@ built locally on a public Kaggle proxy dataset and then deployed on Google Cloud
 config.yaml          sample size, seed, models, budget
 data/                raw → sample → dirty → clean  (git-ignored, created by the code)
 src/cleaner/
-  data.py            download, sample, synthetic columns, error injection
-  agent.py           profile → detect → plan → execute → verify
-  models.py          Ollama + Jev clients
-  report.py          audit report
-  evaluate.py        metrics vs ground truth
+  data/ingest.py         download, sample, synthetic columns, error injection
+  agent/agent.py         profile → detect → plan → execute → verify
+  models/models.py       Ollama + Jev clients
+  report/report.py       audit report
+  evaluate/evaluate.py   metrics vs ground truth
 ```
 
 ## Setup

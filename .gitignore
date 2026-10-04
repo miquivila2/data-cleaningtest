@@ -1,5 +1,5 @@
 # Data (never commit datasets or outputs with customer-like data)
-data/
+/data/
 
 # Python
 .venv/
