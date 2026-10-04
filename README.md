@@ -3,9 +3,6 @@
 Research prototype of an LLM-driven data cleaning agent for telecom customer and usage data,
 built locally on a public Kaggle proxy dataset and then deployed on Google Cloud (BigQuery + Vertex AI).
 
-- `docs/01_idea.md` — research idea, design and evaluation
-- `docs/02_tasks.md` — task pipeline (interactive tracker: `docs/pipeline.html`)
-
 ## Layout
 ```
 data/{raw,dirty,clean}   datasets (git-ignored)
