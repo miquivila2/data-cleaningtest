@@ -16,3 +16,4 @@ service-account*.json
 
 # OS
 .DS_Store
+*.egg-info/

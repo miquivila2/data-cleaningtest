@@ -1,0 +1,27 @@
+seed: 42
+
+sample:
+  rows: 10000            # iterate on a stratified sample; full run only at the end
+  stratify_by: null      # set after profiling (e.g. churn label / ARPU band)
+  columns: null          # null = all; trimmed after profiling to cut tokens
+
+paths:
+  raw: data/raw
+  sample: data/sample
+  dirty: data/dirty
+  ground_truth: data/ground_truth
+  clean: data/clean
+  reports: reports
+
+engine: duckdb           # duckdb | bigquery
+
+models:
+  generator:             # plan, SQL, report
+    provider: ollama
+    model: gemma3:27b
+  judge:                 # typed decisions: column types, validity, duplicates, guardrail
+    provider: jev
+    fallback: {provider: ollama, model: qwen3:4b}
+
+budget:
+  max_usd_per_run: 1.0
