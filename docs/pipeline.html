@@ -1,0 +1,239 @@
+<title>Pipeline Agente Dalefon</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style id="page-style">
+/* Layout: single tracker column — summary strip, open decisions, then phases as ordered task tables */
+:root{
+  --bg:#f5f7f6; --surface:#ffffff; --ink:#15201f; --muted:#5a6967; --line:#dce3e1;
+  --accent:#0d6070; --accent-soft:#e0eef0;
+  --ok:#2c7a4c; --ok-soft:#e2f1e7; --warn:#946500; --warn-soft:#faefd4; --block:#a3412d; --block-soft:#f7e4df;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1413; --surface:#151d1c; --ink:#e3ebe9; --muted:#93a29f; --line:#26312f;
+  --accent:#62c2d3; --accent-soft:#15343a;
+  --ok:#6dc48f; --ok-soft:#163124; --warn:#e0b350; --warn-soft:#342912; --block:#ea8a74; --block-soft:#391e18;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0e1413; --surface:#151d1c; --ink:#e3ebe9; --muted:#93a29f; --line:#26312f;
+  --accent:#62c2d3; --accent-soft:#15343a;
+  --ok:#6dc48f; --ok-soft:#163124; --warn:#e0b350; --warn-soft:#342912; --block:#ea8a74; --block-soft:#391e18;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:36px 64px;display:grid;gap:32px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(26px,4vw,36px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:19px;font-weight:600}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:600}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+header .titles{display:grid;gap:6px;min-width:0}
+.save{font-size:13px;color:var(--muted);min-height:20px}
+.save[data-k="saved"]{color:var(--ok)}
+.save[data-k="error"],.save[data-k="readonly"]{color:var(--block)}
+
+.summary{display:grid;gap:14px}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+.overall{display:flex;justify-content:space-between;gap:12px;font-size:14px;flex-wrap:wrap}
+.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.ph{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px;text-decoration:none;color:inherit}
+.ph:hover{border-color:var(--accent)}
+.ph:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ph .top{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.ph b{font-size:14px;font-weight:600;line-height:1.25}
+.ph .bar{height:5px}
+
+.decisions{border:1px solid var(--warn);background:var(--warn-soft);border-radius:10px;padding:16px;display:grid;gap:10px}
+.decisions h2{font-size:16px;color:var(--warn)}
+.decisions ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.decisions li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:14px}
+.decisions li span:last-child{font-size:12px;color:var(--muted);text-align:right}
+
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:99px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.filters button:focus-visible,.st:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+section.phase{display:grid;gap:10px;scroll-margin-top:16px}
+.phase-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px}
+.phase-head .num{font-family:var(--f-mono);color:var(--accent);margin-right:8px}
+.phase-head .meta{font-size:13px;color:var(--muted)}
+.rows{display:grid;gap:6px}
+.row{display:grid;grid-template-columns:44px minmax(0,1.5fr) minmax(0,1fr) 64px 112px;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.row[data-s="done"]{opacity:.62}
+.row[data-s="done"] .task{text-decoration:line-through;text-decoration-color:var(--muted)}
+.row .id{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.row .task{font-weight:500;min-width:0}
+.row .out{font-size:13px;color:var(--muted);min-width:0}
+.chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;margin-top:4px;letter-spacing:.02em}
+.chip.blk{background:var(--block-soft);color:var(--block)}
+.who{font-size:12px;font-weight:600;text-align:center;padding:3px 0;border-radius:6px;background:var(--accent-soft);color:var(--accent)}
+.who.you{background:var(--warn-soft);color:var(--warn)}
+.st{font:inherit;font-size:13px;font-weight:600;border-radius:6px;padding:6px 8px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--muted);width:100%}
+.st[data-s="doing"]{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.st[data-s="done"]{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.empty{font-size:14px;color:var(--muted);padding:8px 0}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+
+@media (max-width:680px){
+  .row{grid-template-columns:40px minmax(0,1fr) auto;grid-template-areas:"id task who" "id out out" "id st st"}
+  .row .id{grid-area:id;align-self:start}
+  .row .task{grid-area:task}
+  .row .out{grid-area:out}
+  .row .who{grid-area:who;padding-inline:8px}
+  .row .st{grid-area:st}
+}
+@media (prefers-reduced-motion:reduce){.bar>i{transition:none}}
+</style>
+<main id="app" class="wrap"></main>
+<script type="application/json" id="state">{"status":{}}</script>
+<script id="logic">
+(function(){
+const LOGIC = document.currentScript.textContent;
+const HEAD_PART = '<title>Pipeline Agente Dalefon</title>\n<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">\n';
+
+const PHASES = [
+  {n:0, name:"Entorno", days:"0,5 días", tasks:[
+    ["0.1","Crear estructura del repo, git init y entorno virtual Python","Repo listo","Claude"],
+    ["0.2","Instalar pandas, duckdb, kaggle y google-cloud-bigquery","requirements.txt","Claude"],
+    ["0.3","Generar token de Kaggle y guardarlo en ~/.kaggle/kaggle.json","Acceso a Kaggle","Tú"],
+    ["0.4","Instalar Google Cloud SDK (gcloud) y hacer login","CLI autenticada","Tú"]]},
+  {n:1, name:"Datos", days:"1 día", tasks:[
+    ["1.1","Descargar dataset prepago (~100k × 226) y verificar filas y columnas reales","data/raw/","Claude"],
+    ["1.2","Perfilado inicial: nulos, tipos, rangos, duplicados, columnas constantes","Informe de suciedad nativa","Claude"],
+    ["1.3","Añadir columnas sintéticas tipo Dalefon: teléfono MX, email, IMEI, modelo","Esquema cliente + consumo","Claude"],
+    ["1.4","Inyector de errores reproducible (semilla fija) + fichero de verdad","data/dirty/ + ground_truth.csv","Claude"]]},
+  {n:2, name:"Agente en local", days:"4–5 días", tasks:[
+    ["2.1","Profile: estadísticas por columna en SQL (DuckDB, mismo SQL que BigQuery)","profile.json","Claude"],
+    ["2.2","Detect: reglas deterministas (formato, rango, Luhn del IMEI, unicidad)","Lista de incidencias","Claude"],
+    ["2.3","Detect semántico: el LLM recibe perfil + muestra enmascarada","Incidencias semánticas","Claude","Decisión LLM"],
+    ["2.4","Plan: el LLM propone acciones en JSON + SQL de corrección","cleaning_plan.json","Claude"],
+    ["2.5","Review: aprobación humana acción por acción","Plan aprobado","Tú"],
+    ["2.6","Execute + Verify: aplicar SQL, re-perfilar, diff antes/después","Tabla limpia","Claude"],
+    ["2.7","Report: informe de auditoría (estadísticas, visión general, errores, recomendaciones)","audit_report","Claude"],
+    ["2.8","Enmascarado de datos personales antes de cualquier llamada al LLM","pii.py","Claude"]]},
+  {n:3, name:"Evaluación", days:"1–2 días", tasks:[
+    ["3.1","Precisión y recall de detección contra el fichero de verdad","Métricas por tipo de error","Claude"],
+    ["3.2","Exactitud de reparación: % de celdas restauradas al valor real","Métrica","Claude"],
+    ["3.3","Baseline A: script pandas escrito a mano","Comparativa","Claude"],
+    ["3.4","Baseline B: BigQuery Data Preparation (Gemini nativo)","Comparativa","Claude","Proyecto GCP"],
+    ["3.5","Coste (tokens LLM + bytes BigQuery) y tiempo por ejecución","Tabla de costes","Claude"]]},
+  {n:4, name:"Google Cloud", days:"2 días", block:"Proyecto GCP", tasks:[
+    ["4.1","Proyecto + facturación + alerta de presupuesto","Proyecto activo","Tú"],
+    ["4.2","Activar APIs: BigQuery, Cloud Storage, Vertex AI, Cloud Run","APIs listas","Claude"],
+    ["4.3","Bucket raw + datasets BigQuery bronze / silver / gold","Infraestructura","Claude"],
+    ["4.4","Cuenta de servicio: lectura en bronze, escritura en silver y gold","Permisos mínimos","Claude"],
+    ["4.5","Cargar el CSV sucio a Cloud Storage y luego a bronze","Datos en la nube","Claude"],
+    ["4.6","Cambiar el motor del agente de DuckDB a BigQuery","Agente en GCP","Claude"],
+    ["4.7","Empaquetar como Cloud Run Job y ejecutarlo","Ejecución en la nube","Claude"]]},
+  {n:5, name:"Resultados", days:"1–2 días", tasks:[
+    ["5.1","Revisar los datos transformados en silver y gold","Validación","Tú"],
+    ["5.2","Dashboard Looker Studio: calidad antes/después + datos limpios","Dashboard","Claude"],
+    ["5.3","Documento de investigación: método, métricas, conclusiones","Informe final","Claude"],
+    ["5.4","Plantilla de auditoría lista para los datos reales de Dalefon","Entregable cliente","Claude"]]}
+];
+const DECISIONS = [
+  ["LLM: Gemini en Vertex AI (recomendado) o Claude en Vertex AI","Bloquea 2.3"],
+  ["Proyecto GCP: propio o sandbox de Dalefon","Bloquea fase 4 y 3.4"],
+  ["Idioma de los entregables para Dalefon","Afecta 2.7 y 5.3"]
+];
+const LABEL = {todo:"Pendiente", doing:"En curso", done:"Hecha"};
+const NEXT = {todo:"doing", doing:"done", done:"todo"};
+
+let state;
+try { state = JSON.parse(document.getElementById("state").textContent) || {}; } catch(e){ state = {}; }
+state.status = state.status || {};
+let filter = "all";
+try { filter = localStorage.getItem("dalefon-filter") || "all"; } catch(e){}
+
+const ALL = PHASES.flatMap(p => p.tasks.map(t => ({id:t[0], task:t[1], out:t[2], who:t[3], block:t[4] || p.block || null, phase:p.n})));
+const st = id => state.status[id] || "todo";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let saveKind = "", saveText = "";
+function setSave(k, t){ saveKind = k; saveText = t; const el = document.getElementById("save"); if(el){ el.dataset.k = k; el.textContent = t; } }
+
+function visible(t){
+  if(filter === "open") return st(t.id) !== "done";
+  if(filter === "you") return t.who === "Tú";
+  if(filter === "blocked") return !!t.block && st(t.id) !== "done";
+  return true;
+}
+
+function render(){
+  const done = ALL.filter(t => st(t.id) === "done").length;
+  const doing = ALL.filter(t => st(t.id) === "doing").length;
+  const pct = Math.round(done / ALL.length * 100);
+  const phaseCards = PHASES.map(p => {
+    const ts = p.tasks.map(t => t[0]); const d = ts.filter(id => st(id) === "done").length;
+    return `<a class="ph" href="#fase-${p.n}"><div class="top"><span class="mono">Fase ${p.n}</span><span>${esc(p.days)}</span></div><b>${esc(p.name)}</b><div class="bar"><i style="width:${Math.round(d/ts.length*100)}%"></i></div><div class="top"><span class="mono">${d}/${ts.length}</span>${p.block ? '<span style="color:var(--block)">Bloqueada</span>' : ''}</div></a>`;
+  }).join("");
+  const filters = [["all","Todas"],["open","Pendientes"],["you","Te tocan a ti"],["blocked","Bloqueadas"]]
+    .map(([k,l]) => `<button type="button" id="f-${k}" data-f="${k}" aria-pressed="${filter===k}">${l}</button>`).join("");
+  const sections = PHASES.map(p => {
+    const rows = ALL.filter(t => t.phase === p.n && visible(t)).map(t => {
+      const s = st(t.id);
+      return `<div class="row" data-s="${s}"><span class="id">${t.id}</span><div class="task">${esc(t.task)}${t.block ? `<br><span class="chip blk">Bloqueada · ${esc(t.block)}</span>` : ""}</div><div class="out mono">${esc(t.out)}</div><span class="who ${t.who==="Tú"?"you":""}">${esc(t.who)}</span><button type="button" class="st" id="st-${t.id}" data-id="${t.id}" data-s="${s}" aria-label="Estado de ${t.id}: ${LABEL[s]}. Pulsa para cambiar">${LABEL[s]}</button></div>`;
+    }).join("");
+    if(!rows) return "";
+    return `<section class="phase" id="fase-${p.n}"><div class="phase-head"><h2><span class="num">${p.n}</span>${esc(p.name)}</h2><span class="meta">${esc(p.days)} · ${p.tasks.length} tareas</span></div><div class="rows">${rows}</div></section>`;
+  }).join("") || `<p class="empty">No hay tareas con este filtro.</p>`;
+
+  document.getElementById("app").innerHTML = `
+    <header><div class="titles"><span class="eyebrow">Dalefon · Auditoría de datos e IA</span><h1>Pipeline del agente de limpieza</h1><span class="muted">6 fases · ${ALL.length} tareas · ~10–13 días de trabajo (estimación)</span></div><span class="save" id="save" role="status" data-k="${saveKind}">${esc(saveText)}</span></header>
+    <div class="summary"><div class="overall"><span><b class="mono">${done}/${ALL.length}</b> hechas · <span class="mono">${doing}</span> en curso</span><span class="mono muted">${pct}%</span></div><div class="bar"><i style="width:${pct}%"></i></div><div class="phases">${phaseCards}</div></div>
+    <div class="decisions"><h2>Decisiones pendientes</h2><ul>${DECISIONS.map(d => `<li><span>${esc(d[0])}</span><span>${esc(d[1])}</span></li>`).join("")}</ul></div>
+    <div class="filters" role="group" aria-label="Filtrar tareas">${filters}</div>
+    ${sections}
+    <footer>Pulsa el estado de una tarea para pasarla de Pendiente a En curso y a Hecha. Los cambios se guardan para todos los que abren esta página.</footer>`;
+}
+
+let api = null, apiReady = false, readOnly = false, timer = null;
+function buildDoc(){
+  let reset = "";
+  document.querySelectorAll("head style").forEach(s => { if(s.id !== "page-style" && !reset) reset = s.textContent; });
+  const css = document.getElementById("page-style").textContent;
+  const json = JSON.stringify(state).replace(/</g, "\\u003c");
+  return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>' + reset + '</style></head><body>'
+    + HEAD_PART + '<style id="page-style">' + css + '</style>\n<main id="app" class="wrap"></main>\n<script type="application/json" id="state">' + json + '<\/script>\n<script id="logic">' + LOGIC + '<\/script>\n</body></html>';
+}
+async function save(){
+  if(!apiReady){ setSave("", "Conectando… el cambio se guardará en un momento"); timer = setTimeout(save, 1500); return; }
+  if(!api){ setSave("error", "Esta vista no puede guardar: los cambios se perderán al recargar"); return; }
+  if(readOnly) return;
+  setSave("", "Guardando…");
+  try { await api.publish(buildDoc()); setSave("saved", "Guardado para todos"); }
+  catch(e){
+    const c = e && e.code;
+    if(c === "conflict") setSave("", "Otro cambio llegó antes; cargando la versión nueva");
+    else if(c === "not_granted" || c === "not_writer"){ readOnly = true; setSave("readonly", "Solo lectura: no tienes permiso para guardar cambios"); }
+    else setSave("error", "No se pudo guardar. Cambia el estado de nuevo para reintentar");
+  }
+}
+
+document.getElementById("app").addEventListener("click", e => {
+  const f = e.target.closest("[data-f]");
+  if(f){ filter = f.dataset.f; try { localStorage.setItem("dalefon-filter", filter); } catch(_){} render(); return; }
+  const b = e.target.closest(".st");
+  if(!b) return;
+  if(readOnly){ setSave("readonly", "Solo lectura: no tienes permiso para guardar cambios"); return; }
+  const id = b.dataset.id;
+  state.status[id] = NEXT[st(id)];
+  if(state.status[id] === "todo") delete state.status[id];
+  render();
+  document.getElementById("st-" + id)?.focus();
+  setSave("", "Cambios sin guardar…");
+  clearTimeout(timer); timer = setTimeout(save, 1200);
+});
+
+render();
+const use = window.claude && window.claude.use ? window.claude.use("artifact") : Promise.resolve(null);
+use.then(a => { api = a; apiReady = true; if(!a) setSave("", "Vista sin guardado"); }).catch(() => { apiReady = true; setSave("", "Vista sin guardado"); });
+})();
+</script>
