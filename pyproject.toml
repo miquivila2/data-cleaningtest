@@ -1,5 +1,5 @@
 [project]
-name = "dalefon-cleaner"
+name = "cleaner"
 version = "0.1.0"
 description = "LLM-driven data cleaning agent for telecom customer and usage data"
 requires-python = ">=3.12"
@@ -20,9 +20,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "jupyterlab>=4"]
-
-[project.scripts]
-cleaner = "dalefon_cleaner.cli:main"
 
 [build-system]
 requires = ["setuptools>=69"]

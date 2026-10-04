@@ -7,22 +7,14 @@ built locally on a public Kaggle proxy dataset and then deployed on Google Cloud
 
 ## Layout
 ```
-config/                  settings.yaml + declarative quality rules
-data/                    raw → sample → dirty (+ ground_truth) → clean   (git-ignored)
-src/dalefon_cleaner/
-  ingest/                Kaggle download, stratified sample, load to engine
-  synth/                 Dalefon-like columns (MX phone, IMEI, email)
-  injection/             controlled error injection + ground truth
-  engine/                SQL backend: duckdb | bigquery
-  agent/                 profile → detect → plan → review → execute → verify
-    models/              model clients behind one interface (ollama, jev)
-    prompts/             versioned prompt templates
-  pii/                   masking before any external call
-  report/                audit report
-  evaluation/            metrics vs ground truth, baselines
-  cli.py                 cleaner ingest | inject | run | evaluate
-infra/                   gcloud scripts + Dockerfile (Cloud Run Job)
-notebooks/  reports/  tests/
+config.yaml          sample size, seed, models, budget
+data/                raw → sample → dirty → clean  (git-ignored, created by the code)
+src/cleaner/
+  data.py            download, sample, synthetic columns, error injection
+  agent.py           profile → detect → plan → execute → verify
+  models.py          Ollama + Jev clients
+  report.py          audit report
+  evaluate.py        metrics vs ground truth
 ```
 
 ## Setup
