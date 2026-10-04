@@ -8,6 +8,7 @@ sample:
 paths:
   raw: data/raw
   sample: data/sample
+  readable: data/readable
   dirty: data/dirty
   ground_truth: data/ground_truth
   clean: data/clean
