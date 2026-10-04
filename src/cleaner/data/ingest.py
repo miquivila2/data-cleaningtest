@@ -1,12 +1,24 @@
-"""Kaggle download, stratified sample, readable tables (clientes + consumo_mensual)."""
+"""Kaggle download, stratified sample, readable tables (clientes + consumo_mensual), Dalefon-like columns."""
 
+import unicodedata
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import yaml
+from faker import Faker
 
 RAW_CSV = "telecom_churn_data.csv"
 MONTHS = {6: "2014-06", 7: "2014-07", 8: "2014-08", 9: "2014-09"}
+SNAPSHOT_DATE = pd.Timestamp("2014-09-30")  # last day covered by the dataset
+
+MX_AREA_CODES = ["55", "56", "33", "81"]  # CDMX, CDMX, Guadalajara, Monterrey (2-digit -> 10-digit numbers)
+EMAIL_DOMAINS = ["gmail.com", "hotmail.com", "outlook.com", "yahoo.com.mx", "icloud.com"]
+ESIM_DEVICES = [
+    "iPhone 12", "iPhone 13", "iPhone 14", "iPhone 15", "iPhone 16",
+    "Samsung Galaxy S23", "Samsung Galaxy S24", "Samsung Galaxy A54", "Samsung Galaxy A55",
+    "Motorola Edge 40", "Motorola Edge 50", "Google Pixel 7", "Google Pixel 8", "Xiaomi 14",
+]
 
 # readable name -> raw column prefix (raw columns are "<prefix>_<month>")
 MONTHLY_COLUMNS = {
@@ -62,12 +74,75 @@ def to_readable(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     return clientes, consumo
 
 
+def to_mx_phone(numbers: pd.Series, rng: np.random.Generator) -> pd.Series:
+    """Map raw 10-digit numbers (70000xxxxx) to Mexican 10-digit numbers: area code + last 8 digits.
+
+    The last 8 raw digits are unique, so the mapping stays unique and both tables keep joining.
+    """
+    area = rng.choice(MX_AREA_CODES, size=len(numbers))
+    return pd.Series(area, index=numbers.index) + numbers.astype(str).str[-8:]
+
+
+def luhn_check_digit(body: str) -> str:
+    total = 0
+    for i, d in enumerate(reversed(body)):
+        n = int(d)
+        if i % 2 == 0:  # double every second digit from the right (check digit not yet appended)
+            n = n * 2 - 9 if n > 4 else n * 2
+        total += n
+    return str((10 - total % 10) % 10)
+
+
+def make_imei(rng: np.random.Generator) -> str:
+    body = "35" + "".join(rng.choice(list("0123456789"), size=12))
+    return body + luhn_check_digit(body)
+
+
+def slug(text: str) -> str:
+    ascii_text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+    return "".join(c for c in ascii_text.lower() if c.isalnum() or c == " ").strip().replace(" ", ".")
+
+
+def add_dalefon_columns(
+    clientes: pd.DataFrame, consumo: pd.DataFrame, seed: int
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Add clean synthetic customer columns like the ones Dalefon collects (name, email, device, IMEI, signup)."""
+    rng = np.random.default_rng(seed)
+    fake = Faker("es_MX")
+    Faker.seed(seed)
+
+    phone_map = dict(zip(clientes["telefono"], to_mx_phone(clientes["telefono"], rng)))
+    out = clientes.copy()
+    out["telefono"] = out["telefono"].map(phone_map)
+
+    names, emails, seen = [], [], set()
+    for _ in range(len(out)):
+        first, last = fake.first_name(), fake.last_name()
+        names.append(f"{first} {last}")
+        local = f"{slug(first)}.{slug(last)}"
+        email = f"{local}@{rng.choice(EMAIL_DOMAINS)}"
+        while email in seen:
+            email = f"{local}{rng.integers(1, 999)}@{email.split('@')[1]}"
+        seen.add(email)
+        emails.append(email)
+    out["nombre"] = names
+    out["email"] = emails
+    out["modelo_dispositivo"] = rng.choice(ESIM_DEVICES, size=len(out))
+    out["imei"] = [make_imei(rng) for _ in range(len(out))]
+    out["fecha_alta"] = (SNAPSHOT_DATE - pd.to_timedelta(out["antiguedad_dias"], unit="D")).dt.date
+
+    out = out[["telefono", "nombre", "email", "modelo_dispositivo", "imei", "fecha_alta", "antiguedad_dias"]]
+    consumo = consumo.assign(telefono=consumo["telefono"].map(phone_map))
+    return out, consumo
+
+
 def main() -> None:
     cfg = load_config()
     paths = cfg["paths"]
     raw = load_raw(paths["raw"])
     sample = stratified_sample(raw, cfg["sample"]["rows"], cfg["seed"])
     clientes, consumo = to_readable(sample)
+    clientes, consumo = add_dalefon_columns(clientes, consumo, cfg["seed"])
 
     out = Path(paths["readable"])
     out.mkdir(parents=True, exist_ok=True)
