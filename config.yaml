@@ -13,8 +13,9 @@ paths:
   ground_truth: data/ground_truth
   clean: data/clean
   reports: reports
+  runs: data/runs
 
-engine: duckdb           # duckdb | bigquery
+engine: bigquery         # duckdb | bigquery
 
 models:
   generator:             # plan, SQL, report

@@ -5,6 +5,7 @@ import csv
 import os
 from pathlib import Path
 
+import pandas as pd
 import yaml
 from dotenv import load_dotenv
 from google.cloud import bigquery, storage
@@ -13,9 +14,16 @@ TABLES = ["clientes", "consumo_mensual"]
 
 
 def string_schema(csv_path: Path) -> list[bigquery.SchemaField]:
+    """_fila (row position in the dirty CSV) lets us match findings with the ground truth; the rest is STRING."""
     with csv_path.open(newline="") as f:
         header = next(csv.reader(f))
-    return [bigquery.SchemaField(name, "STRING") for name in header]
+    return [bigquery.SchemaField("_fila", "INT64")] + [bigquery.SchemaField(n, "STRING") for n in header]
+
+
+def with_row_number(csv_path: Path) -> str:
+    df = pd.read_csv(csv_path, dtype=str, keep_default_na=False)
+    df.insert(0, "_fila", range(len(df)))
+    return df.to_csv(index=False)
 
 
 def load_bronze(dirty_dir: Path, project: str, location: str, bucket_name: str) -> None:
@@ -26,7 +34,7 @@ def load_bronze(dirty_dir: Path, project: str, location: str, bucket_name: str) 
     for table in TABLES:
         path = dirty_dir / f"{table}.csv"
         blob = bucket.blob(f"dirty/{path.name}")
-        blob.upload_from_filename(path)
+        blob.upload_from_string(with_row_number(path), content_type="text/csv")
         uri = f"gs://{bucket_name}/{blob.name}"
 
         job_config = bigquery.LoadJobConfig(
