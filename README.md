@@ -19,7 +19,7 @@ src/cleaner/
 
 ## Setup
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+python3 -m venv .venv && .venv/bin/pip install -r requirements.lock && .venv/bin/pip install -e . --no-deps
 cp .env.example .env
 kaggle auth login
 ```
