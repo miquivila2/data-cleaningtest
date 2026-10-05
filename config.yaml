@@ -22,7 +22,7 @@ models:
     model: gemma3:27b
   judge:                 # typed decisions: column types, validity, duplicates, guardrail
     provider: jev
-    fallback: {provider: ollama, model: qwen3:4b}
+    fallback: {provider: ollama, model: gemma3:27b}
 
 budget:
   max_usd_per_run: 1.0
