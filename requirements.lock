@@ -16,6 +16,7 @@ cffi==2.1.1
 charset-normalizer==3.5.2
 comm==0.2.3
 cryptography==50.0.2
+db-dtypes==1.7.2
 debugpy==1.8.22
 defusedxml==0.7.1
 duckdb==1.5.6
